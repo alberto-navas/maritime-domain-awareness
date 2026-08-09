@@ -21,5 +21,5 @@ warn_redundant_casts = true
 # separado que valga la pena instalar solo para esto); son librerias de
 # terceros consolidadas, no codigo nuestro que debamos tipar.
 [[tool.mypy.overrides]]
-module = ["pandas.*", "matplotlib.*", "yaml.*"]
+module = ["pandas.*", "matplotlib.*", "yaml.*", "shapely.*"]
 ignore_missing_imports = true

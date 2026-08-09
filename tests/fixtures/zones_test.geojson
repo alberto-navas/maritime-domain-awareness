@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {"seamark_type": "harbour", "name": "Test Harbour", "osm_id": 1},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[10.0, 55.0], [10.1, 55.0], [10.1, 55.1], [10.0, 55.1], [10.0, 55.0]]]
+      }
+    }
+  ]
+}

@@ -40,5 +40,15 @@ def test_findings_csv_has_expected_columns(fixtures_dir: Path, tmp_path: Path) -
         rows = list(csv.DictReader(f))
 
     assert len(rows) == len(result.findings)
-    assert set(rows[0]) == {"timestamp", "mmsi", "category", "severity", "description", "lat", "lon", "evidence"}
+    assert set(rows[0]) == {
+        "timestamp",
+        "mmsi",
+        "secondary_mmsi",
+        "category",
+        "severity",
+        "description",
+        "lat",
+        "lon",
+        "evidence",
+    }
     json.loads(rows[0]["evidence"])  # debe ser JSON valido

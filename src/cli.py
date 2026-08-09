@@ -14,6 +14,7 @@ from pathlib import Path
 from .config import load_config
 from .pipeline import run_pipeline
 from .report import write_report
+from .zones import PortZones
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -42,6 +43,15 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="YAML con umbrales personalizados (ver config/thresholds.yaml). Por defecto, los umbrales incorporados.",
     )
+    parser.add_argument(
+        "--zones",
+        type=Path,
+        default=None,
+        help=(
+            "GeoJSON de zonas portuarias/fondeadero para el detector de encuentros "
+            "(ver data/zones/README.md). Por defecto, el extracto de Dinamarca/Baltico incluido."
+        ),
+    )
     args = parser.parse_args(argv)
 
     for input_path in args.inputs:
@@ -49,10 +59,11 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(f"No existe el archivo: {input_path}")
 
     config = load_config(args.config)
+    zones = PortZones.load(args.zones) if args.zones is not None else None
 
     print(f"Parseando {len(args.inputs)} fichero(s)...")
     try:
-        result = run_pipeline(args.inputs, config)
+        result = run_pipeline(args.inputs, config, zones)
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 

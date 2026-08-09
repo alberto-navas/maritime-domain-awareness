@@ -11,12 +11,13 @@ CONFIG = DetectorConfig()
 def test_pipeline_produces_tracks_and_expected_finding_categories(fixtures_dir: Path) -> None:
     result = run_pipeline([fixtures_dir / "sample_dma.csv"], CONFIG)
 
-    assert set(result.tracks) == {219000001, 219000002, 219000003, 219000004}
+    assert set(result.tracks) == {219000001, 219000002, 219000003, 219000004, 219000005, 219000006}
 
     categories = {f.category for f in result.findings}
     assert "ais_gap" in categories  # MMSI 219000001, hueco de 20 min underway
     assert "implausible_jump" in categories  # MMSI 219000003
     assert "sog_mismatch" in categories  # MMSI 219000003
+    assert "rendezvous" in categories  # MMSI 219000005 y 219000006, 25 min juntos en aguas abiertas
 
     # MMSI 219000002 esta fondeado y su hueco de 20 min no debe generar hallazgo.
     assert not any(f.mmsi == 219000002 for f in result.findings)

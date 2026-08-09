@@ -9,3 +9,8 @@ gap_threshold_default_s: 1800.0
 max_plausible_speed_kn: 60.0
 sog_mismatch_threshold_kn: 15.0
 sog_mismatch_min_dt_s: 30.0
+
+rendezvous_max_distance_m: 500.0
+rendezvous_max_speed_kn: 3.0
+rendezvous_min_duration_s: 1200.0
+rendezvous_time_match_tolerance_s: 300.0

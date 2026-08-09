@@ -44,6 +44,25 @@ class DetectorConfig:
     # pequeño y puede parecer una discrepancia grande sin serlo.
     sog_mismatch_min_dt_s: float = 30.0
 
+    # --- Encuentros/loitering (src/detectors/rendezvous.py) ----------------
+    # Distancia por debajo de la cual dos buques se consideran "juntos".
+    # 500m es mucho mas que la separacion normal de trafico maritimo de
+    # paso, pero razonable para un transbordo pegado costado con costado.
+    rendezvous_max_distance_m: float = 500.0
+    # Ambos buques tienen que estar prácticamente parados (no solo cerca) —
+    # si no, dos buques cruzandose a velocidad de crucero por casualidad
+    # dispararian el detector. 3 nudos es maniobra/deriva, no navegacion.
+    rendezvous_max_speed_kn: float = 3.0
+    # Duracion minima sostenida para que la proximidad cuente como encuentro
+    # y no como dos buques que simplemente se cruzan un instante.
+    rendezvous_min_duration_s: float = 1200.0
+    # Los dos buques no transmiten en el mismo instante exacto: al comparar
+    # el informe de uno con el mas cercano en el tiempo del otro, se
+    # descarta el emparejamiento si estan mas separados en el tiempo que
+    # esto (evita comparar posiciones que en realidad son de momentos
+    # distintos).
+    rendezvous_time_match_tolerance_s: float = 300.0
+
 
 def load_config(path: str | Path | None) -> DetectorConfig:
     """

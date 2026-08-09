@@ -11,9 +11,11 @@ from pathlib import Path
 from .config import DetectorConfig
 from .detectors.gaps import detect_ais_gaps
 from .detectors.kinematics import detect_kinematic_anomalies
+from .detectors.rendezvous import detect_rendezvous
 from .ingest import parse_ais_csvs
 from .model import Finding, Track, VesselIdentity
 from .tracks import build_tracks
+from .zones import PortZones
 
 
 @dataclass
@@ -23,7 +25,7 @@ class PipelineResult:
     findings: list[Finding]
 
 
-def run_pipeline(paths: list[Path], config: DetectorConfig) -> PipelineResult:
+def run_pipeline(paths: list[Path], config: DetectorConfig, zones: PortZones | None = None) -> PipelineResult:
     """
     Ejecuta el pipeline completo sobre uno o varios ficheros CSV de DMA.
 
@@ -31,6 +33,10 @@ def run_pipeline(paths: list[Path], config: DetectorConfig) -> PipelineResult:
     de posicion: un dataset vacio no genera un informe util, mejor avisar
     claramente que dejar que el resto del pipeline produzca un resultado
     vacio sin explicar por que.
+
+    `zones` es opcional para poder inyectar unas zonas distintas (p.ej. en
+    tests, o si se amplia la cobertura geografica); por defecto carga el
+    extracto de OSM incluido en data/zones/.
     """
     positions, identities = parse_ais_csvs(paths)
     if not positions:
@@ -40,11 +46,14 @@ def run_pipeline(paths: list[Path], config: DetectorConfig) -> PipelineResult:
         )
 
     tracks = build_tracks(positions)
+    if zones is None:
+        zones = PortZones.load()
 
     findings: list[Finding] = []
     for track in tracks.values():
         findings.extend(detect_ais_gaps(track, config))
         findings.extend(detect_kinematic_anomalies(track, config))
+    findings.extend(detect_rendezvous(tracks, zones, config))
     findings.sort(key=lambda f: (f.timestamp, f.mmsi))
 
     return PipelineResult(tracks=tracks, identities=identities, findings=findings)

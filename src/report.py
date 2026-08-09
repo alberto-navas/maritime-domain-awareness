@@ -47,7 +47,17 @@ def write_findings_csv(findings: list[Finding], path: Path) -> None:
     serializa como una unica columna JSON en vez de forzar un esquema comun
     artificial.
     """
-    fieldnames = ["timestamp", "mmsi", "category", "severity", "description", "lat", "lon", "evidence"]
+    fieldnames = [
+        "timestamp",
+        "mmsi",
+        "secondary_mmsi",
+        "category",
+        "severity",
+        "description",
+        "lat",
+        "lon",
+        "evidence",
+    ]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -56,6 +66,7 @@ def write_findings_csv(findings: list[Finding], path: Path) -> None:
                 {
                     "timestamp": finding.timestamp.isoformat(),
                     "mmsi": finding.mmsi,
+                    "secondary_mmsi": finding.secondary_mmsi,
                     "category": finding.category,
                     "severity": finding.severity,
                     "description": finding.description,

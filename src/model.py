@@ -104,11 +104,14 @@ class Finding:
 
     timestamp: datetime
     mmsi: int
-    category: str  # "ais_gap" | "implausible_jump" | "sog_mismatch"
+    category: str  # "ais_gap" | "implausible_jump" | "sog_mismatch" | "rendezvous"
     severity: str  # "info" | "warning" | "critical"
     description: str  # siempre en espanol
     lat: float | None = None  # posicion asociada al hallazgo, para el mapa
     lon: float | None = None
+    # Solo relevante para hallazgos entre dos buques (p.ej. "rendezvous"):
+    # el otro MMSI implicado. None en todos los detectores de una sola traza.
+    secondary_mmsi: int | None = None
     # Valores numericos/contextuales que respaldan la regla (p.ej. duracion
     # del hueco, velocidad implicada, umbral usado), para el informe JSON/CSV
     # y para que los tests puedan comprobar el calculo sin parsear description.
