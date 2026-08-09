@@ -10,6 +10,13 @@ naval anomalo — huecos de transmision, saltos de posicion/velocidad
 implausibles — como pistas para que un analista humano las revise, no
 como veredictos.
 
+<p align="center">
+  <img src="docs/screenshots/map.png" alt="Mapa generado por el CLI: trazas AIS de varios buques con los hallazgos marcados por severidad (hueco de transmision, salto implausible, discrepancia de SOG)" width="800">
+</p>
+
+*Mapa generado con datos sinteticos de demostracion (ver "Datos de prueba"
+mas abajo) — cada linea es un buque, cada punto coloreado un hallazgo.*
+
 ## Motivacion
 
 Todo buque de cierto tamaño emite su posicion, velocidad e identidad por
