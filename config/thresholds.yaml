@@ -1,0 +1,11 @@
+# Umbrales de los detectores. Cualquier clave omitida conserva su valor por
+# defecto (ver src/config.py, donde esta documentado el porque de cada uno).
+# Pasar este fichero al CLI con --config es opcional.
+
+gap_threshold_underway_s: 900.0
+gap_threshold_anchored_s: 3600.0
+gap_threshold_default_s: 1800.0
+
+max_plausible_speed_kn: 60.0
+sog_mismatch_threshold_kn: 15.0
+sog_mismatch_min_dt_s: 30.0

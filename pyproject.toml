@@ -1,0 +1,25 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: ordenacion de imports, UP: sintaxis
+# moderna de Python, B: bugbear (errores comunes no siempre detectados por
+# pyflakes), SIM: simplificaciones obvias. No se activa un preset agresivo
+# (como ALL): el objetivo es detectar errores reales y mantener un estilo
+# consistente, no forzar un estilo de codigo particular en cada linea.
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+# Ninguna de estas librerias publica type stubs (ni un paquete "-stubs"
+# separado que valga la pena instalar solo para esto); son librerias de
+# terceros consolidadas, no codigo nuestro que debamos tipar.
+[[tool.mypy.overrides]]
+module = ["pandas.*", "matplotlib.*", "yaml.*"]
+ignore_missing_imports = true

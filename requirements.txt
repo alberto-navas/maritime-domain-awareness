@@ -1,0 +1,7 @@
+pandas>=2.2.0        # manipulacion tabular y agrupacion temporal por MMSI
+matplotlib>=3.8.0      # mapa estatico de trazas con los hallazgos marcados
+pyyaml>=6.0.1            # carga de umbrales de configuracion desde YAML
+pytest>=8.0.0              # framework de tests (dependencia de desarrollo)
+pytest-cov>=5.0.0            # cobertura de tests (dependencia de desarrollo)
+ruff>=0.16.0                   # lint + formato de codigo (dependencia de desarrollo)
+mypy>=1.10.0                     # comprobacion estatica de tipos (dependencia de desarrollo)
