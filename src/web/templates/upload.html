@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ lang }}">
 <head>
 <meta charset="UTF-8">
 <title>Maritime Domain Awareness</title>
@@ -17,9 +17,15 @@
   body { margin: 0; padding: 3rem 1.25rem; background: var(--bg); color: var(--ink); font-family: var(--font-sans); display: flex; justify-content: center; }
   main { max-width: 640px; width: 100%; }
 
+  .top-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
   .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; margin: 0 0 0.5rem 0; }
   h1 { margin: 0 0 0.4rem 0; font-size: 1.55rem; font-weight: 700; letter-spacing: -0.01em; }
   .subtitle { color: var(--muted); margin: 0 0 1.75rem 0; font-size: 0.95rem; line-height: 1.5; }
+
+  .lang-switch { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; flex-shrink: 0; }
+  .lang-switch a { background: var(--surface); color: var(--muted); padding: 0.35rem 0.6rem; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; text-decoration: none; letter-spacing: 0.02em; }
+  .lang-switch a + a { border-left: 1px solid var(--border); }
+  .lang-switch a[aria-current="true"] { background: var(--accent); color: var(--surface); }
 
   section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.25rem; }
   h2 { margin: 0 0 0.6rem 0; font-size: 1.05rem; }
@@ -38,39 +44,35 @@
 </head>
 <body>
 <main>
-  <p class="eyebrow">Maritime Domain Awareness</p>
-  <h1>Panel de analisis AIS</h1>
-  <p class="subtitle">
-    Mapa animado con las trazas AIS y los hallazgos marcados en su instante exacto — un slider de reproduccion,
-    no un video pregrabado. Analiza el escenario de demostracion o sube tu propio CSV con el esquema de la
-    Danish Maritime Authority.
-  </p>
+  <div class="top-bar">
+    <p class="eyebrow">Maritime Domain Awareness</p>
+    <div class="lang-switch" role="group" aria-label="Idioma / Language / Sprache">
+      <a href="/?lang=es" aria-current="{{ 'true' if lang == 'es' else 'false' }}">ES</a>
+      <a href="/?lang=en" aria-current="{{ 'true' if lang == 'en' else 'false' }}">EN</a>
+      <a href="/?lang=de" aria-current="{{ 'true' if lang == 'de' else 'false' }}">DE</a>
+    </div>
+  </div>
+  <h1>{{ labels.page_title }}</h1>
+  <p class="subtitle">{{ labels.subtitle }}</p>
 
   <section>
-    <h2>Escenario de demostracion</h2>
-    <p class="hint">
-      Estrecho de Gibraltar y Mar de Alboran, con datos sinteticos (no son datos AIS reales — la Danish Maritime
-      Authority no cubre esta region) que incluyen un caso de cada uno de los cuatro detectores.
-    </p>
-    <a class="btn" href="/demo">Ver demo: Estrecho de Gibraltar</a>
+    <h2>{{ labels.demo_heading }}</h2>
+    <p class="hint">{{ labels.demo_hint }}</p>
+    <a class="btn" href="/demo?lang={{ lang }}">{{ labels.demo_btn }}</a>
   </section>
 
   <section>
-    <h2>Analizar tu propio CSV</h2>
-    <p class="hint">Formato Danish Maritime Authority (ver README del proyecto).</p>
+    <h2>{{ labels.upload_heading }}</h2>
+    <p class="hint">{{ labels.upload_hint }}</p>
     <form id="analyze-form" action="/analyze" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="lang" value="{{ lang }}">
       <input type="file" id="file" name="file" accept=".csv" required>
-      <button type="submit" id="submit-btn">Analizar</button>
-      <p id="status">Analizando…</p>
+      <button type="submit" id="submit-btn">{{ labels.analyze_btn }}</button>
+      <p id="status">{{ labels.status_msg }}</p>
     </form>
   </section>
 
-  <p class="limits">
-    Esto es una capa de analisis y señalizacion para revision humana, nunca de interdiccion ni de decision
-    automatizada. No es tracking en vivo: solo procesa el CSV que subas o el escenario de demostracion
-    sintetico, nunca una conexion en tiempo real a buques operando ahora mismo. "Marcado como sospechoso" no
-    es "culpable" — cada hallazgo es una pista para que un analista la investigue.
-  </p>
+  <p class="limits">{{ labels.limits_text }}</p>
 </main>
 <script>
   document.getElementById('analyze-form').addEventListener('submit', function () {

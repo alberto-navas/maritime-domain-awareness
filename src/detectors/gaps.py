@@ -64,6 +64,14 @@ def detect_ais_gaps(track: Track, config: DetectorConfig) -> list[Finding]:
                     "lat_after": curr.lat,
                     "lon_after": curr.lon,
                 },
+                message_key="ais_gap",
+                message_params={
+                    "duration_min": dt / 60,
+                    "threshold_min": threshold / 60,
+                    "nav_status": prev.nav_status.value,
+                    "gap_start": prev.timestamp.isoformat(),
+                    "gap_end": curr.timestamp.isoformat(),
+                },
             )
         )
 

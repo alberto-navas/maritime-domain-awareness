@@ -34,12 +34,46 @@ def test_demo_renders_report_with_all_finding_categories() -> None:
     assert "<iframe" in response.text
 
 
+def test_upload_form_defaults_to_spanish() -> None:
+    response = client.get("/")
+    assert 'lang="es"' in response.text
+    assert "Panel de analisis AIS" in response.text
+
+
+def test_upload_form_lang_query_param_switches_language() -> None:
+    en = client.get("/?lang=en")
+    de = client.get("/?lang=de")
+    assert 'lang="en"' in en.text and "AIS Analysis Panel" in en.text
+    assert 'lang="de"' in de.text and "AIS-Analysepanel" in de.text
+
+
+def test_upload_form_unsupported_lang_falls_back_to_spanish() -> None:
+    response = client.get("/?lang=fr")
+    assert 'lang="es"' in response.text
+
+
+def test_demo_translates_findings_when_lang_given() -> None:
+    response = client.get("/demo?lang=de")
+
+    assert response.status_code == 200
+    assert "Befunde" in response.text  # cabecera traducida
+    assert "Übertragungslücke" in response.text  # descripcion del hallazgo ais_gap traducida
+
+
 def test_analyze_uploaded_csv_renders_report(fixtures_dir: Path) -> None:
     with open(fixtures_dir / "sample_dma.csv", "rb") as f:
         response = client.post("/analyze", files={"file": ("sample_dma.csv", f, "text/csv")})
 
     assert response.status_code == 200
     assert "ais_gap" in response.text
+
+
+def test_analyze_with_lang_field_translates_report(fixtures_dir: Path) -> None:
+    with open(fixtures_dir / "sample_dma.csv", "rb") as f:
+        response = client.post("/analyze", files={"file": ("sample_dma.csv", f, "text/csv")}, data={"lang": "en"})
+
+    assert response.status_code == 200
+    assert "AIS transmission gap" in response.text
 
 
 def test_analyze_without_file_returns_422() -> None:

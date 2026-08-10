@@ -52,3 +52,19 @@ def test_findings_csv_has_expected_columns(fixtures_dir: Path, tmp_path: Path) -
         "evidence",
     }
     json.loads(rows[0]["evidence"])  # debe ser JSON valido
+
+
+def test_write_report_translates_descriptions_when_lang_given(fixtures_dir: Path, tmp_path: Path) -> None:
+    result = run_pipeline([fixtures_dir / "sample_dma.csv"], CONFIG)
+    output_dir = tmp_path / "output"
+
+    write_report(result, output_dir, lang="de")
+
+    rows = json.loads((output_dir / "findings.json").read_text(encoding="utf-8"))
+    gap_row = next(r for r in rows if r["category"] == "ais_gap")
+    assert "Übertragungslücke" in gap_row["description"]
+
+    with open(output_dir / "findings.csv", newline="", encoding="utf-8") as f:
+        csv_rows = list(csv.DictReader(f))
+    csv_gap_row = next(r for r in csv_rows if r["category"] == "ais_gap")
+    assert "Übertragungslücke" in csv_gap_row["description"]

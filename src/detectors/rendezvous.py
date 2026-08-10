@@ -104,6 +104,15 @@ def _finding_from_episode(
             "episode_end": end_a.timestamp.isoformat(),
             "sample_count": len(episode),
         },
+        message_key="rendezvous",
+        message_params={
+            "mmsi_a": track_a.mmsi,
+            "mmsi_b": track_b.mmsi,
+            "distance_m": config.rendezvous_max_distance_m,
+            "duration_min": duration / 60,
+            "speed_kn": config.rendezvous_max_speed_kn,
+            "min_duration_min": config.rendezvous_min_duration_s / 60,
+        },
     )
 
 

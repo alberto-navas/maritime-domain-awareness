@@ -118,3 +118,9 @@ class Finding:
     # del hueco, velocidad implicada, umbral usado), para el informe JSON/CSV
     # y para que los tests puedan comprobar el calculo sin parsear description.
     evidence: dict = field(default_factory=dict)
+    # Clave de plantilla en src/i18n.py + valores para rellenarla, usados
+    # para reconstruir `description` en otro idioma al generar el informe
+    # (CLI --lang o panel web). None cuando no hay plantilla equivalente
+    # (no debería pasar en la practica: todo detector rellena esto).
+    message_key: str | None = None
+    message_params: dict = field(default_factory=dict)

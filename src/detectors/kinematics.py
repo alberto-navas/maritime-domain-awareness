@@ -60,6 +60,8 @@ def detect_implausible_jumps(track: Track, config: DetectorConfig) -> list[Findi
                     "lat_after": curr.lat,
                     "lon_after": curr.lon,
                 },
+                message_key="implausible_jump",
+                message_params={"speed_kn": implied_speed, "threshold_kn": config.max_plausible_speed_kn},
             )
         )
     return findings
@@ -98,6 +100,13 @@ def detect_sog_mismatches(track: Track, config: DetectorConfig) -> list[Finding]
                     "implied_speed_kn": implied_speed,
                     "reported_sog_kn": curr.sog,
                     "difference_kn": diff,
+                    "threshold_kn": config.sog_mismatch_threshold_kn,
+                },
+                message_key="sog_mismatch",
+                message_params={
+                    "implied_kn": implied_speed,
+                    "diff_kn": diff,
+                    "sog_kn": curr.sog,
                     "threshold_kn": config.sog_mismatch_threshold_kn,
                 },
             )

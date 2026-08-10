@@ -76,6 +76,14 @@ progresivamente con el tiempo y cada hallazgo aparece como marcador en su
 instante exacto, junto a la tabla de hallazgos. Capa fina sobre el mismo
 `src/pipeline.py` que usa el CLI: no reimplementa ningun detector.
 
+**Español / English / Deutsch**: el CLI (`--lang`) y el panel web
+(selector de idioma en la pagina) pueden generar el informe completo
+— hallazgos, mapa estatico o animado, mensajes de consola — en
+cualquiera de los tres idiomas. Cada detector solo genera su
+`description` en español (mas `message_key`/`message_params` para
+reconstruirla en otro idioma, ver `src/i18n.py`); un detector nunca sabe
+que existe el concepto de idioma.
+
 ## Arquitectura
 
 ```
@@ -151,6 +159,9 @@ python -m src.cli data/samples/2024-01-01.csv --config config/thresholds.yaml
 # Zonas portuarias/fondeadero alternativas (por defecto, el extracto de
 # Dinamarca/Baltico incluido en data/zones/)
 python -m src.cli data/samples/2024-01-01.csv --zones data/zones/otro_extracto.geojson
+
+# Informe (findings.json/.csv/map.png) y mensajes de consola en ingles o aleman
+python -m src.cli data/samples/2024-01-01.csv --lang en
 ```
 
 Genera `findings.json`, `findings.csv` (mismo contenido, para abrir en
@@ -166,7 +177,10 @@ python -m src.web
 
 Sube un CSV propio o pulsa "Ver demo" para cargar el escenario del
 Estrecho de Gibraltar incluido (`data/demo/alboran_strait.csv`, ver
-"Escenario de demostracion" mas abajo) y ver el mapa animado.
+"Escenario de demostracion" mas abajo) y ver el mapa animado. El
+selector ES/EN/DE arriba a la derecha cambia el idioma de toda la
+pagina — la URL (`?lang=en`) es autocontenida, sin cookies ni estado de
+sesion.
 
 ## Tests
 
@@ -174,9 +188,9 @@ Estrecho de Gibraltar incluido (`data/demo/alboran_strait.csv`, ver
 pytest -v
 ```
 
-76 tests cubriendo los trece modulos del pipeline y del panel web (geo,
-ingest, tracks, config, zonas, los cuatro detectores, pipeline, informe,
-CLI, mapa animado, panel web), con fixtures sinteticas versionadas en
+99 tests cubriendo los catorce modulos del pipeline y del panel web (geo,
+ingest, tracks, config, zonas, i18n, los cuatro detectores, pipeline,
+informe, CLI, mapa animado, panel web), con fixtures sinteticas versionadas en
 `tests/fixtures/` que siguen el esquema real de columnas de DMA — ninguno
 depende de descargar nada externo (los extractos de zonas portuarias y el
 escenario de demostracion si estan versionados, pero son ficheros locales,
@@ -297,7 +311,6 @@ nunca de interdiccion ni de decision automatizada:
 - **Umbral de velocidad por tipo de buque**: `VesselIdentity.ship_type`
   ya se parsea; el techo de velocidad plausible de `kinematics.py` podria
   calibrarse por tipo en vez de un unico umbral global.
-- Informe/CLI en varios idiomas (como los proyectos hermanos).
 - **Despliegue en vivo del panel web** (como los proyectos hermanos, via
   Render): de momento el panel web solo esta pensado para correr en
   local (`python -m src.web`).

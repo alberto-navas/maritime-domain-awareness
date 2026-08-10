@@ -84,6 +84,14 @@ def _detect_identity_change(mmsi: int, identities: list[VesselIdentity]) -> list
                             "new_value": value,
                             "changed_at": identity.timestamp.isoformat(),
                         },
+                        message_key="identity_change",
+                        message_params={
+                            "field": field,
+                            "mmsi": mmsi,
+                            "previous": previous,
+                            "new": value,
+                            "changed_at": identity.timestamp.isoformat(),
+                        },
                     )
                 )
             current[field] = value
@@ -109,6 +117,8 @@ def _detect_invalid_imo(mmsi: int, identities: list[VesselIdentity]) -> list[Fin
                     "estandar; probable numero mal formado o inventado, no necesariamente malicioso."
                 ),
                 evidence={"imo": identity.imo},
+                message_key="invalid_imo_checksum",
+                message_params={"imo": identity.imo, "mmsi": mmsi},
             )
         )
     return findings
@@ -131,6 +141,8 @@ def _detect_mmsi_structure(track: Track) -> Finding | None:
         lat=first.lat,
         lon=first.lon,
         evidence={"mmsi": track.mmsi, "digit_count": len(digits), "first_digit": digits[0] if digits else None},
+        message_key="invalid_mmsi_structure",
+        message_params={"mmsi": track.mmsi},
     )
 
 

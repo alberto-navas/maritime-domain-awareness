@@ -13,6 +13,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from .i18n import MAP_LABELS, normalize_lang, severity_label, translate_description
 from .model import Finding, Track, VesselIdentity
 from .pipeline import PipelineResult
 
@@ -32,13 +33,17 @@ def latest_names(identities: list[VesselIdentity]) -> dict[int, str]:
     return {mmsi: identity.name for mmsi, identity in latest.items() if identity.name is not None}
 
 
-def write_findings_json(findings: list[Finding], path: Path) -> None:
+def write_findings_json(findings: list[Finding], path: Path, lang: str = "es") -> None:
     """Vuelca los hallazgos como una lista JSON, ordenados ya por tiempo (ver pipeline.py)."""
-    rows = [asdict(f) | {"timestamp": f.timestamp.isoformat()} for f in findings]
+    lang = normalize_lang(lang)
+    rows = [
+        asdict(f) | {"timestamp": f.timestamp.isoformat(), "description": translate_description(f, lang)}
+        for f in findings
+    ]
     path.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def write_findings_csv(findings: list[Finding], path: Path) -> None:
+def write_findings_csv(findings: list[Finding], path: Path, lang: str = "es") -> None:
     """
     Vuelca los hallazgos como CSV para abrir en cualquier hoja de calculo.
 
@@ -47,6 +52,7 @@ def write_findings_csv(findings: list[Finding], path: Path) -> None:
     serializa como una unica columna JSON en vez de forzar un esquema comun
     artificial.
     """
+    lang = normalize_lang(lang)
     fieldnames = [
         "timestamp",
         "mmsi",
@@ -69,7 +75,7 @@ def write_findings_csv(findings: list[Finding], path: Path) -> None:
                     "secondary_mmsi": finding.secondary_mmsi,
                     "category": finding.category,
                     "severity": finding.severity,
-                    "description": finding.description,
+                    "description": translate_description(finding, lang),
                     "lat": finding.lat,
                     "lon": finding.lon,
                     "evidence": json.dumps(finding.evidence, ensure_ascii=False),
@@ -77,7 +83,9 @@ def write_findings_csv(findings: list[Finding], path: Path) -> None:
             )
 
 
-def render_map(tracks: dict[int, Track], findings: list[Finding], identities: list[VesselIdentity], path: Path) -> None:
+def render_map(
+    tracks: dict[int, Track], findings: list[Finding], identities: list[VesselIdentity], path: Path, lang: str = "es"
+) -> None:
     """
     Dibuja cada traza como una linea y superpone los hallazgos como puntos coloreados por severidad.
 
@@ -91,6 +99,8 @@ def render_map(tracks: dict[int, Track], findings: list[Finding], identities: li
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    lang = normalize_lang(lang)
+    labels = MAP_LABELS[lang]
     names = latest_names(identities)
 
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -112,20 +122,22 @@ def render_map(tracks: dict[int, Track], findings: list[Finding], identities: li
         if not points:
             continue
         xs, ys = zip(*points, strict=True)
-        ax.scatter(xs, ys, c=color, s=28, edgecolors="black", linewidths=0.4, label=f"hallazgo: {severity}", zorder=3)
+        legend_label = f"{labels['finding_prefix']}: {severity_label(severity, lang)}"
+        ax.scatter(xs, ys, c=color, s=28, edgecolors="black", linewidths=0.4, label=legend_label, zorder=3)
 
-    ax.set_xlabel("Longitud")
-    ax.set_ylabel("Latitud")
-    ax.set_title("Trazas AIS y hallazgos")
+    ax.set_xlabel(labels["xlabel"])
+    ax.set_ylabel(labels["ylabel"])
+    ax.set_title(labels["title"])
     ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize="small")
     fig.tight_layout()
     fig.savefig(path, dpi=150)
     plt.close(fig)
 
 
-def write_report(result: PipelineResult, output_dir: Path) -> None:
+def write_report(result: PipelineResult, output_dir: Path, lang: str = "es") -> None:
     """Escribe findings.json, findings.csv y map.png en output_dir (se crea si no existe)."""
+    lang = normalize_lang(lang)
     output_dir.mkdir(parents=True, exist_ok=True)
-    write_findings_json(result.findings, output_dir / "findings.json")
-    write_findings_csv(result.findings, output_dir / "findings.csv")
-    render_map(result.tracks, result.findings, result.identities, output_dir / "map.png")
+    write_findings_json(result.findings, output_dir / "findings.json", lang)
+    write_findings_csv(result.findings, output_dir / "findings.csv", lang)
+    render_map(result.tracks, result.findings, result.identities, output_dir / "map.png", lang)

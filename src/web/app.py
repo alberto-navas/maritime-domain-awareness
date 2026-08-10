@@ -8,16 +8,22 @@ Capa fina sobre el mismo pipeline que usa el CLI (src/cli.py): no
 reimplementa nada de src/pipeline.py, src/detectors/, src/zones.py; solo
 adapta la entrada (CSV subido por HTTP en vez de ruta de archivo) y la
 salida (HTML servido directamente en vez de escrito a disco + PNG).
+
+El idioma (es/en/de) es siempre un parametro explicito de la peticion
+(query string en GET, campo de formulario en POST) — nunca estado de
+sesion ni cookie: cada URL/peticion es autocontenida y reproducible.
 """
 
 import tempfile
 from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from ..config import DetectorConfig
+from ..i18n import UI_LABELS, normalize_lang, severity_label, translate_description
 from ..pipeline import PipelineResult, run_pipeline
 from ..report import latest_names
 from ..zones import PortZones
@@ -56,36 +62,47 @@ async def _save_upload(upload: UploadFile, dest_dir: Path) -> Path:
     return dest
 
 
-def _render_report(request: Request, result: PipelineResult, source_label: str) -> HTMLResponse:
+def _render_report(request: Request, result: PipelineResult, source_label: str, lang: str) -> HTMLResponse:
     map_html = build_animated_map(result.tracks, result.findings, result.identities)
-    return _templates.TemplateResponse(
-        request,
-        "report.html",
-        {
-            "source_label": source_label,
-            "map_html": map_html,
-            "findings": result.findings,
-            "names": latest_names(result.identities),
-            "vessel_count": len(result.tracks),
-            "report_count": sum(len(t.reports) for t in result.tracks.values()),
-        },
-    )
+    context: dict[str, Any] = {
+        "lang": lang,
+        "labels": UI_LABELS[lang],
+        "source_label": source_label,
+        "map_html": map_html,
+        "findings": result.findings,
+        "names": latest_names(result.identities),
+        "vessel_count": len(result.tracks),
+        "report_count": sum(len(t.reports) for t in result.tracks.values()),
+        # Funciones pasadas directamente al contexto de Jinja: cada fila de
+        # la tabla de hallazgos las llama para su propia traduccion, en vez
+        # de precalcular listas paralelas de strings traducidos.
+        "describe": lambda finding: translate_description(finding, lang),
+        "sev_label": lambda severity: severity_label(severity, lang),
+    }
+    return _templates.TemplateResponse(request, "report.html", context)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def upload_form(request: Request) -> HTMLResponse:
-    return _templates.TemplateResponse(request, "upload.html", {})
+async def upload_form(request: Request, lang: str = "es") -> HTMLResponse:
+    lang = normalize_lang(lang)
+    return _templates.TemplateResponse(request, "upload.html", {"lang": lang, "labels": UI_LABELS[lang]})
 
 
 @app.get("/demo", response_class=HTMLResponse)
-async def demo(request: Request) -> HTMLResponse:
+async def demo(request: Request, lang: str = "es") -> HTMLResponse:
+    lang = normalize_lang(lang)
     zones = PortZones.load(_DEMO_ZONES)
     result = run_pipeline([_DEMO_CSV], DetectorConfig(), zones)
-    return _render_report(request, result, "Demo: Estrecho de Gibraltar y Mar de Alboran (datos sinteticos)")
+    return _render_report(request, result, UI_LABELS[lang]["demo_source_label"], lang)
 
 
 @app.post("/analyze", response_class=HTMLResponse)
-async def analyze(request: Request, file: UploadFile = File(...)) -> HTMLResponse:  # noqa: B008 — patron estandar de FastAPI
+async def analyze(
+    request: Request,
+    file: UploadFile = File(...),  # noqa: B008 — patron estandar de FastAPI
+    lang: str = Form("es"),
+) -> HTMLResponse:
+    lang = normalize_lang(lang)
     with tempfile.TemporaryDirectory() as tmp_dir_name:
         tmp_dir = Path(tmp_dir_name)
         try:
@@ -96,4 +113,4 @@ async def analyze(request: Request, file: UploadFile = File(...)) -> HTMLRespons
             # traduce a un error HTTP legible, no a un traceback de 500.
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-        return _render_report(request, result, saved_path.name)
+        return _render_report(request, result, saved_path.name, lang)

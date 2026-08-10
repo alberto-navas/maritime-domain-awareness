@@ -72,6 +72,14 @@ each finding appears as a marker at its exact moment, alongside the
 findings table. A thin layer over the same `src/pipeline.py` the CLI
 uses: it doesn't reimplement any detector.
 
+**Spanish / English / German**: the CLI (`--lang`) and the web panel
+(language switcher on the page) can produce the full report — findings,
+static or animated map, console messages — in any of the three
+languages. Each detector only ever generates its `description` in
+Spanish (plus `message_key`/`message_params` to reconstruct it in
+another language, see `src/i18n.py`); a detector never knows the concept
+of language exists.
+
 ## Architecture
 
 ```
@@ -147,6 +155,9 @@ python -m src.cli data/samples/2024-01-01.csv --config config/thresholds.yaml
 
 # Alternative port/anchorage zones (defaults to the bundled Denmark/Baltic extract)
 python -m src.cli data/samples/2024-01-01.csv --zones data/zones/other_extract.geojson
+
+# Report (findings.json/.csv/map.png) and console messages in English or German
+python -m src.cli data/samples/2024-01-01.csv --lang en
 ```
 
 Produces `findings.json`, `findings.csv` (same content, for opening in
@@ -162,7 +173,9 @@ python -m src.web
 
 Upload your own CSV or click "View demo" to load the bundled Strait of
 Gibraltar scenario (`data/demo/alboran_strait.csv`, see "Demo scenario"
-below) and see the animated map.
+below) and see the animated map. The ES/EN/DE switcher top-right changes
+the language of the whole page — the URL (`?lang=en`) is self-contained,
+no cookies or session state.
 
 ## Tests
 
@@ -170,9 +183,9 @@ below) and see the animated map.
 pytest -v
 ```
 
-76 tests covering all thirteen pipeline and web-panel modules (geo,
-ingest, tracks, config, zones, all four detectors, pipeline, report, CLI,
-animated map, web panel), using versioned synthetic fixtures in
+99 tests covering all fourteen pipeline and web-panel modules (geo,
+ingest, tracks, config, zones, i18n, all four detectors, pipeline,
+report, CLI, animated map, web panel), using versioned synthetic fixtures in
 `tests/fixtures/` that follow DMA's real column schema — none depend on
 downloading anything external (the port-zone extracts and the demo
 scenario are versioned too, but they're local files, not test-time
@@ -288,7 +301,6 @@ interdiction or automated-decision tool:
 - **Speed threshold by vessel type**: `VesselIdentity.ship_type` is
   already parsed; `kinematics.py`'s plausible-speed ceiling could be
   calibrated per type instead of a single global threshold.
-- Multi-language report/CLI output (like the sibling projects).
 - **Live deployment of the web panel** (like the sibling projects, via
   Render): for now the web panel is only meant to run locally
   (`python -m src.web`).
