@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Maritime Domain Awareness</title>
+<style>
+  :root {
+    --bg: #eef1f5; --surface: #ffffff; --surface-alt: #f4f6f9;
+    --ink: #101828; --muted: #5d6b82; --border: #dde3ea; --accent: #1b4965;
+    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Roboto Mono", monospace;
+    --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0b0f14; --surface:#131a22; --surface-alt:#0f151c; --ink:#e6ebf0; --muted:#93a1b4; --border:#263241; --accent:#6fb3d9; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 3rem 1.25rem; background: var(--bg); color: var(--ink); font-family: var(--font-sans); display: flex; justify-content: center; }
+  main { max-width: 640px; width: 100%; }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; margin: 0 0 0.5rem 0; }
+  h1 { margin: 0 0 0.4rem 0; font-size: 1.55rem; font-weight: 700; letter-spacing: -0.01em; }
+  .subtitle { color: var(--muted); margin: 0 0 1.75rem 0; font-size: 0.95rem; line-height: 1.5; }
+
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.25rem; }
+  h2 { margin: 0 0 0.6rem 0; font-size: 1.05rem; }
+  p.hint { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 1.1rem 0; line-height: 1.45; }
+
+  input[type="file"] { width: 100%; padding: 0.75rem; border: 1px dashed var(--border); border-radius: 6px; background: var(--surface-alt); color: var(--ink); margin-bottom: 0.6rem; font-family: var(--font-sans); font-size: 0.9rem; }
+
+  button, .btn { background: var(--accent); color: var(--surface); border: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+  button:hover, .btn:hover { filter: brightness(1.1); }
+  button:disabled { background: var(--muted); cursor: wait; }
+
+  #status { margin-top: 1rem; color: var(--accent); font-size: 0.87rem; display: none; font-family: var(--font-mono); }
+
+  .limits { font-size: 0.82rem; color: var(--muted); line-height: 1.5; border-left: 3px solid var(--border); padding-left: 0.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Maritime Domain Awareness</p>
+  <h1>Panel de analisis AIS</h1>
+  <p class="subtitle">
+    Mapa animado con las trazas AIS y los hallazgos marcados en su instante exacto — un slider de reproduccion,
+    no un video pregrabado. Analiza el escenario de demostracion o sube tu propio CSV con el esquema de la
+    Danish Maritime Authority.
+  </p>
+
+  <section>
+    <h2>Escenario de demostracion</h2>
+    <p class="hint">
+      Estrecho de Gibraltar y Mar de Alboran, con datos sinteticos (no son datos AIS reales — la Danish Maritime
+      Authority no cubre esta region) que incluyen un caso de cada uno de los cuatro detectores.
+    </p>
+    <a class="btn" href="/demo">Ver demo: Estrecho de Gibraltar</a>
+  </section>
+
+  <section>
+    <h2>Analizar tu propio CSV</h2>
+    <p class="hint">Formato Danish Maritime Authority (ver README del proyecto).</p>
+    <form id="analyze-form" action="/analyze" method="post" enctype="multipart/form-data">
+      <input type="file" id="file" name="file" accept=".csv" required>
+      <button type="submit" id="submit-btn">Analizar</button>
+      <p id="status">Analizando…</p>
+    </form>
+  </section>
+
+  <p class="limits">
+    Esto es una capa de analisis y señalizacion para revision humana, nunca de interdiccion ni de decision
+    automatizada. No es tracking en vivo: solo procesa el CSV que subas o el escenario de demostracion
+    sintetico, nunca una conexion en tiempo real a buques operando ahora mismo. "Marcado como sospechoso" no
+    es "culpable" — cada hallazgo es una pista para que un analista la investigue.
+  </p>
+</main>
+<script>
+  document.getElementById('analyze-form').addEventListener('submit', function () {
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('status').style.display = 'block';
+  });
+</script>
+</body>
+</html>

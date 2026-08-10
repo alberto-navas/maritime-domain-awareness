@@ -68,6 +68,14 @@ Cada hallazgo (`Finding`) lleva su categoria, severidad, posicion, y una
 umbral se superó y con qué valores — nunca una conclusión (ver mas abajo,
 "Qué NO hace este proyecto").
 
+**Panel web** (`src/web/`, opcional, no forma parte del pipeline de
+analisis en si): sube un CSV o carga el escenario de demostracion
+(Estrecho de Gibraltar) y ve un mapa animado (Leaflet real, con costas
+reales) con un slider de reproduccion — cada traza se dibuja
+progresivamente con el tiempo y cada hallazgo aparece como marcador en su
+instante exacto, junto a la tabla de hallazgos. Capa fina sobre el mismo
+`src/pipeline.py` que usa el CLI: no reimplementa ningun detector.
+
 ## Arquitectura
 
 ```
@@ -90,11 +98,15 @@ src/detectors/identity.py     (identidad, usa VesselIdentity[] directamente)
         ▼
 src/pipeline.py   (orquesta ingest -> tracks -> detectores -> Finding[])
         │
-        ▼
-src/report.py     (findings.json + findings.csv + mapa estatico PNG)
-        ▲
-        │
-src/cli.py
+        ├─────────────────────────────────┐
+        ▼                                  ▼
+src/report.py                      src/web/animated_map.py
+  (findings.json/.csv +              (mapa Leaflet animado)
+   mapa estatico PNG)                        │
+        ▲                                    ▼
+        │                          src/web/app.py (FastAPI, opcional)
+src/cli.py                                   │
+                                     python -m src.web
 ```
 
 `src/model.py` es el vocabulario comun (`PositionReport`, `VesselIdentity`,
@@ -118,6 +130,12 @@ comprobaciones son estructurales (una identidad cambia o no, un digito de
 control es valido o no), no hay "cuanto es demasiado" que calibrar, asi
 que no recibe `DetectorConfig`.
 
+`src/web/` es una capa opcional: el pipeline de analisis (`src/
+pipeline.py` + detectores) no importa nada de `src/web/` ni sabe que
+existe. Solo añade una forma alternativa de ver el mismo
+`PipelineResult` — un mapa animado en vez de un PNG estatico — sin tocar
+ninguna logica de deteccion.
+
 ## Uso
 
 ```bash
@@ -139,20 +157,32 @@ Genera `findings.json`, `findings.csv` (mismo contenido, para abrir en
 cualquier hoja de calculo) y `map.png` (cada traza como una linea, cada
 hallazgo como un punto coloreado por severidad).
 
+**Panel web** (opcional):
+
+```bash
+python -m src.web
+# -> http://127.0.0.1:8000
+```
+
+Sube un CSV propio o pulsa "Ver demo" para cargar el escenario del
+Estrecho de Gibraltar incluido (`data/demo/alboran_strait.csv`, ver
+"Escenario de demostracion" mas abajo) y ver el mapa animado.
+
 ## Tests
 
 ```bash
 pytest -v
 ```
 
-62 tests cubriendo los once modulos del pipeline (geo, ingest, tracks,
-config, zonas, los cuatro detectores, pipeline, informe, CLI), con fixtures
-sinteticas versionadas en `tests/fixtures/` que siguen el esquema real de
-columnas de DMA — ninguno depende de descargar nada externo (el extracto
-real de zonas portuarias si esta versionado, ver "Zonas portuarias" mas
-abajo, pero es un fichero local, no una descarga en tiempo de test). Se
-ejecutan automaticamente en cada `push` via GitHub Actions
-(`.github/workflows/tests.yml`), en Ubuntu y Windows.
+76 tests cubriendo los trece modulos del pipeline y del panel web (geo,
+ingest, tracks, config, zonas, los cuatro detectores, pipeline, informe,
+CLI, mapa animado, panel web), con fixtures sinteticas versionadas en
+`tests/fixtures/` que siguen el esquema real de columnas de DMA — ninguno
+depende de descargar nada externo (los extractos de zonas portuarias y el
+escenario de demostracion si estan versionados, pero son ficheros locales,
+no una descarga en tiempo de test). Se ejecutan automaticamente en cada
+`push` via GitHub Actions (`.github/workflows/tests.yml`), en Ubuntu y
+Windows.
 
 ## Calidad de codigo
 
@@ -191,19 +221,33 @@ Para un analisis con datos reales: descarga cualquier fichero diario de
 https://web.ais.dk/aisdata/ y pasalo directamente al CLI — el esquema de
 columnas coincide.
 
+## Escenario de demostracion (panel web)
+
+`data/demo/alboran_strait.csv` es un segundo dataset sintetico, distinto
+del de tests: mas grande (13 buques) y situado en el Estrecho de
+Gibraltar y el Mar de Alboran — no son datos reales (DMA no cubre esta
+region), es un escenario inventado pero geograficamente realista,
+generado por `data/demo/generate_alboran_demo.py`, pensado para que el
+panel web (`python -m src.web` -> "Ver demo") tenga varios buques
+moviendose a la vez y al menos un caso de cada uno de los cuatro
+detectores. El dataset del Baltico (`tests/fixtures/sample_dma.csv`)
+sigue siendo el que usan los tests y la captura de arriba.
+
 ## Zonas portuarias/fondeadero
 
 `rendezvous.py` necesita distinguir un encuentro sostenido en aguas
 abiertas de dos buques simplemente atracados o fondeados en el mismo
-puerto — si no, dispararia en cada puerto del dataset. Para eso usa un
-extracto real de [OpenStreetMap](https://www.openstreetmap.org/copyright)
-(licencia ODbL): 909 poligonos de puerto y fondeadero
-(`seamark:type=harbour` / `seamark:type=anchorage`) en aguas danesas y
-balticas, versionado en `data/zones/dk_baltic_ports.geojson`. Solo se
-incluyen poligonos reales (elementos `way` cerrados de OSM); nodos sueltos
-y relaciones multipoligono se descartan deliberadamente — ver
-`data/zones/README.md` para la fuente exacta, la licencia completa, y como
-regenerar o ampliar el extracto con `data/zones/fetch_ports.py`.
+puerto — si no, dispararia en cada puerto del dataset. Para eso usa
+extractos reales de [OpenStreetMap](https://www.openstreetmap.org/copyright)
+(licencia ODbL) — poligonos de puerto y fondeadero
+(`seamark:type=harbour` / `seamark:type=anchorage`), uno por escenario:
+`data/zones/dk_baltic_ports.geojson` (909 poligonos, Dinamarca/Baltico) y
+`data/zones/alboran_ports.geojson` (23 poligonos, Estrecho de
+Gibraltar/Alboran). Solo se incluyen poligonos reales (elementos `way`
+cerrados de OSM); nodos sueltos y relaciones multipoligono se descartan
+deliberadamente — ver `data/zones/README.md` para la fuente exacta, la
+licencia completa, y como regenerar o crear un extracto nuevo con
+`data/zones/fetch_ports.py`.
 
 ## Qué NO hace este proyecto (deliberadamente)
 
@@ -220,7 +264,9 @@ nunca de interdiccion ni de decision automatizada:
   conclusion sobre la intencion del buque.
 - No es tracking en vivo: solo procesa datos AIS historicos ya publicados
   legalmente para investigacion, nunca una conexion en tiempo real a
-  buques operando ahora mismo.
+  buques operando ahora mismo — el mapa animado del panel web es una
+  reproduccion de datos historicos/sinteticos ya cargados, con play/pausa
+  y un slider de tiempo, no una conexion en vivo a ningun buque real.
 - El detector de encuentros (`rendezvous.py`) señala un PATRON compatible
   con un encuentro planificado (proximidad + baja velocidad + duracion
   sostenida, fuera de zona portuaria) — no confirma que sea un transbordo,
@@ -252,4 +298,6 @@ nunca de interdiccion ni de decision automatizada:
   ya se parsea; el techo de velocidad plausible de `kinematics.py` podria
   calibrarse por tipo en vez de un unico umbral global.
 - Informe/CLI en varios idiomas (como los proyectos hermanos).
-- Mapa interactivo en vez de PNG estatico.
+- **Despliegue en vivo del panel web** (como los proyectos hermanos, via
+  Render): de momento el panel web solo esta pensado para correr en
+  local (`python -m src.web`).

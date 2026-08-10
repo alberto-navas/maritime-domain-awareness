@@ -1,39 +1,45 @@
 """
-Regenera dk_baltic_ports.geojson desde cero, consultando Overpass API.
+Regenera un extracto de zonas portuarias/fondeadero desde cero, consultando
+Overpass API.
 
-No forma parte del pipeline (src/): es una herramienta de un solo uso para
-reconstruir el dataset de zonas si hace falta ampliar el area cubierta o
-refrescarlo con datos de OSM mas recientes. Ejecutar desde la raiz del
-repo: `python data/zones/fetch_ports.py`.
+No forma parte del pipeline (src/): es una herramienta para reconstruir un
+dataset de zonas si hace falta ampliar el area cubierta o refrescarlo con
+datos de OSM mas recientes. Ejecutar desde la raiz del repo:
+
+    python data/zones/fetch_ports.py
+    python data/zones/fetch_ports.py --bbox 35.0,-6.0,36.5,-2.0 --output data/zones/alboran_ports.geojson
 """
 
+import argparse
 import json
 import urllib.request
 from pathlib import Path
 
 # Dinamarca + Kattegat + Skagerrak + Baltico occidental: la misma zona que
 # cubren los datos AIS de la Danish Maritime Authority (ver README.md).
-BBOX = "53.0,6.0,58.5,15.5"
+_DEFAULT_BBOX = "53.0,6.0,58.5,15.5"
+_DEFAULT_OUTPUT = Path(__file__).parent / "dk_baltic_ports.geojson"
 
-OVERPASS_QUERY = f"""
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+
+def _build_query(bbox: str) -> str:
+    return f"""
 [out:json][timeout:60];
 (
-  node["seamark:type"="harbour"]({BBOX});
-  way["seamark:type"="harbour"]({BBOX});
-  relation["seamark:type"="harbour"]({BBOX});
-  node["seamark:type"="anchorage"]({BBOX});
-  way["seamark:type"="anchorage"]({BBOX});
-  relation["seamark:type"="anchorage"]({BBOX});
+  node["seamark:type"="harbour"]({bbox});
+  way["seamark:type"="harbour"]({bbox});
+  relation["seamark:type"="harbour"]({bbox});
+  node["seamark:type"="anchorage"]({bbox});
+  way["seamark:type"="anchorage"]({bbox});
+  relation["seamark:type"="anchorage"]({bbox});
 );
 out geom;
 """.strip()
 
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
-OUTPUT_PATH = Path(__file__).parent / "dk_baltic_ports.geojson"
 
-
-def fetch_elements() -> list[dict]:
-    request = urllib.request.Request(OVERPASS_URL, data=OVERPASS_QUERY.encode("utf-8"))
+def fetch_elements(bbox: str) -> list[dict]:
+    request = urllib.request.Request(OVERPASS_URL, data=_build_query(bbox).encode("utf-8"))
     with urllib.request.urlopen(request, timeout=90) as response:
         return json.load(response)["elements"]
 
@@ -73,6 +79,15 @@ def to_geojson(elements: list[dict]) -> dict:
 
 
 if __name__ == "__main__":
-    geojson = to_geojson(fetch_elements())
-    OUTPUT_PATH.write_text(json.dumps(geojson, ensure_ascii=False), encoding="utf-8")
-    print(f"{len(geojson['features'])} poligonos escritos en {OUTPUT_PATH}")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--bbox",
+        default=_DEFAULT_BBOX,
+        help=f"sur,oeste,norte,este en grados decimales (por defecto: Dinamarca/Baltico, {_DEFAULT_BBOX})",
+    )
+    parser.add_argument("--output", type=Path, default=_DEFAULT_OUTPUT, help="ruta del GeoJSON de salida")
+    args = parser.parse_args()
+
+    geojson = to_geojson(fetch_elements(args.bbox))
+    args.output.write_text(json.dumps(geojson, ensure_ascii=False), encoding="utf-8")
+    print(f"{len(geojson['features'])} poligonos escritos en {args.output}")

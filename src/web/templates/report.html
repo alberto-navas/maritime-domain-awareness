@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Maritime Domain Awareness — Informe</title>
+<style>
+  :root {
+    --bg: #eef1f5; --surface: #ffffff; --surface-alt: #f4f6f9;
+    --ink: #101828; --muted: #5d6b82; --border: #dde3ea; --accent: #1b4965;
+    --info: #3b82f6; --warning: #f59e0b; --critical: #dc2626;
+    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Roboto Mono", monospace;
+    --font-sans: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0b0f14; --surface:#131a22; --surface-alt:#0f151c; --ink:#e6ebf0; --muted:#93a1b4; --border:#263241; --accent:#6fb3d9; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 2rem 1.25rem 4rem; background: var(--bg); color: var(--ink); font-family: var(--font-sans); display: flex; justify-content: center; }
+  main { max-width: 960px; width: 100%; }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; margin: 0 0 0.5rem 0; }
+  h1 { margin: 0 0 0.3rem 0; font-size: 1.4rem; font-weight: 700; }
+  .subtitle { color: var(--muted); margin: 0 0 1.5rem 0; font-size: 0.9rem; }
+  .back-link { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
+
+  .summary { display: flex; gap: 1.5rem; margin: 0.5rem 0 1.5rem 0; font-size: 0.88rem; color: var(--muted); }
+  .summary strong { color: var(--ink); }
+
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.5rem; }
+  h2 { margin: 0 0 0.9rem 0; font-size: 1rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  td.mmsi { font-family: var(--font-mono); white-space: nowrap; }
+
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; color: #fff; }
+  .badge.info { background: var(--info); }
+  .badge.warning { background: var(--warning); }
+  .badge.critical { background: var(--critical); }
+
+  .empty { color: var(--muted); font-size: 0.88rem; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Maritime Domain Awareness</p>
+  <h1>{{ source_label }}</h1>
+  <p class="subtitle"><a class="back-link" href="/">&larr; volver</a></p>
+
+  <div class="summary">
+    <span><strong>{{ vessel_count }}</strong> buques</span>
+    <span><strong>{{ report_count }}</strong> informes de posicion</span>
+    <span><strong>{{ findings|length }}</strong> hallazgos</span>
+  </div>
+
+  <section>
+    <h2>Mapa animado</h2>
+    {{ map_html | safe }}
+  </section>
+
+  <section>
+    <h2>Hallazgos</h2>
+    {% if findings %}
+    <table>
+      <thead>
+        <tr>
+          <th>Instante</th>
+          <th>Buque(s)</th>
+          <th>Categoria</th>
+          <th>Severidad</th>
+          <th>Descripcion</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for finding in findings %}
+        <tr>
+          <td>{{ finding.timestamp.strftime("%Y-%m-%d %H:%M") }}</td>
+          <td class="mmsi">
+            {{ names.get(finding.mmsi, finding.mmsi) }}
+            {% if finding.secondary_mmsi %}&harr; {{ names.get(finding.secondary_mmsi, finding.secondary_mmsi) }}{% endif %}
+          </td>
+          <td>{{ finding.category }}</td>
+          <td><span class="badge {{ finding.severity }}">{{ finding.severity }}</span></td>
+          <td>{{ finding.description }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">Sin hallazgos en este dataset.</p>
+    {% endif %}
+  </section>
+</main>
+</body>
+</html>

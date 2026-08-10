@@ -20,7 +20,7 @@ _SEVERITY_COLOR = {"info": "#3b82f6", "warning": "#f59e0b", "critical": "#dc2626
 _SEVERITY_ORDER = {"info": 0, "warning": 1, "critical": 2}
 
 
-def _latest_names(identities: list[VesselIdentity]) -> dict[int, str]:
+def latest_names(identities: list[VesselIdentity]) -> dict[int, str]:
     """Nombre mas reciente conocido por MMSI, para etiquetar el mapa; vacio si no hay identidad."""
     latest: dict[int, VesselIdentity] = {}
     for identity in identities:
@@ -91,7 +91,7 @@ def render_map(tracks: dict[int, Track], findings: list[Finding], identities: li
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    names = _latest_names(identities)
+    names = latest_names(identities)
 
     fig, ax = plt.subplots(figsize=(10, 8))
     for mmsi, track in tracks.items():
