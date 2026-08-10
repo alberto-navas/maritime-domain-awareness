@@ -114,16 +114,26 @@ def interpolate(lat1: float, lon1: float, lat2: float, lon2: float, n: int) -> l
 
 base = datetime(2024, 6, 1, 8, 0, 0)
 
+# Puntos de referencia frente a cada puerto (NO las coordenadas del propio
+# puerto: las de la ciudad/puerto caen en tierra al interpolar en linea
+# recta entre dos de ellas, que es exactamente el bug que corrigen estas
+# constantes). Cada una se verifico a mano contra el mapa real (Leaflet,
+# mismas teselas OSM que usa el panel) antes de fijarla aqui.
+TARIFA_OFFSHORE = (35.995, -5.610)
+ALGECIRAS_OFFSHORE = (36.085, -5.405)
+CEUTA_OFFSHORE = (35.950, -5.300)
+TANGER_OFFSHORE = (35.815, -5.850)
+
 # Vessel 1: ESTRECHO EXPRESS - ferry Tarifa -> Tanger, traza limpia.
 mmsi1 = 224100001
 add_identity(mmsi1, base, "ESTRECHO EXPRESS", "EAES1", 9345673, "Passenger", 100.0, 18.0, "TANGER")
-for i, (lat, lon) in enumerate(interpolate(36.0128, -5.6012, 35.7595, -5.8340, 20)):
+for i, (lat, lon) in enumerate(interpolate(*TARIFA_OFFSHORE, *TANGER_OFFSHORE, 20)):
     add_position(mmsi1, base + timedelta(minutes=4 * i), lat, lon, cog=225, heading=225)
 
 # Vessel 2: RIF TRADER - hueco de transmision AIS a mitad de cruce.
 mmsi2 = 224100002
 add_identity(mmsi2, base, "RIF TRADER", "EAES2", 9345685, "Cargo", 150.0, 24.0, "CEUTA")
-pts2 = interpolate(36.1408, -5.4562, 35.8894, -5.3213, 16)
+pts2 = interpolate(*ALGECIRAS_OFFSHORE, *CEUTA_OFFSHORE, 16)
 for i, (lat, lon) in enumerate(pts2):
     offset = timedelta(minutes=5 * i) if i < 8 else timedelta(minutes=5 * 8 + 45 + 5 * (i - 8))
     add_position(mmsi2, base + offset, lat, lon, cog=170, heading=170)
@@ -141,7 +151,13 @@ mmsi4 = 224100004
 add_identity(mmsi4, base, "CEUTA LOCAL", "EAES4", 9345702, "Passenger", 45.0, 10.0, "CEUTA")
 for i in range(10):
     add_position(
-        mmsi4, base + timedelta(minutes=20 * i), 35.8894, -5.3213, nav_status="At anchor", sog=0.1, cog=0, heading=0
+        mmsi4,
+        base + timedelta(minutes=20 * i),
+        *CEUTA_OFFSHORE,
+        nav_status="At anchor",
+        sog=0.1,
+        cog=0,
+        heading=0,
     )
 
 # Vessel 5: FAST SKIFF - dos puntos, discrepancia de SOG (implica ~30
@@ -186,8 +202,8 @@ add_identity(mmsi10, base, "UNREGISTERED CARGO", "EAES10", 1234568, "Cargo", 110
 # Vessels 11-13: trafico de fondo cruzando el estrecho, sin hallazgos —
 # para que el mapa animado tenga varios buques moviendose a la vez.
 background = [
-    (224100011, "ATLAS FERRY", 36.1408, -5.4562, 35.8894, -5.3213, 18),
-    (224100012, "PILLARS OF HERCULES", 36.0128, -5.6012, 35.7595, -5.8340, 18),
+    (224100011, "ATLAS FERRY", *ALGECIRAS_OFFSHORE, *CEUTA_OFFSHORE, 18),
+    (224100012, "PILLARS OF HERCULES", *TARIFA_OFFSHORE, *TANGER_OFFSHORE, 18),
     (224100013, "LEVANTE CARRIER", 35.95, -5.10, 36.05, -5.90, 20),
 ]
 for mmsi, name, lat1, lon1, lat2, lon2, n in background:
