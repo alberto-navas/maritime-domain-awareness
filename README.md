@@ -11,11 +11,12 @@ implausibles — como pistas para que un analista humano las revise, no
 como veredictos.
 
 <p align="center">
-  <img src="docs/screenshots/map.png" alt="Mapa generado por el CLI: trazas AIS de varios buques con los hallazgos marcados por severidad (hueco de transmision, salto implausible, discrepancia de SOG, encuentro sostenido, MMSI estructuralmente invalido)" width="800">
+  <img src="docs/screenshots/panel_web.gif" alt="Panel web: mapa animado del Estrecho de Gibraltar reproduciendose, con las trazas de los buques dibujandose con el tiempo y los hallazgos apareciendo como marcadores coloreados por severidad" width="800">
 </p>
 
-*Mapa generado con datos sinteticos de demostracion (ver "Datos de prueba"
-mas abajo) — cada linea es un buque, cada punto coloreado un hallazgo.*
+*Panel web (`python -m src.web`) reproduciendo el escenario de demostracion
+del Estrecho de Gibraltar — mapa Leaflet real, no un video pregrabado: cada
+traza se dibuja con el tiempo y cada hallazgo aparece en su instante exacto.*
 
 ## Motivacion
 
@@ -166,7 +167,11 @@ python -m src.cli data/samples/2024-01-01.csv --lang en
 
 Genera `findings.json`, `findings.csv` (mismo contenido, para abrir en
 cualquier hoja de calculo) y `map.png` (cada traza como una linea, cada
-hallazgo como un punto coloreado por severidad).
+hallazgo como un punto coloreado por severidad):
+
+<p align="center">
+  <img src="docs/screenshots/map.png" alt="Mapa estatico generado por el CLI: trazas AIS de varios buques con los hallazgos marcados por severidad (hueco de transmision, salto implausible, discrepancia de SOG, encuentro sostenido, MMSI estructuralmente invalido)" width="700">
+</p>
 
 **Panel web** (opcional):
 
