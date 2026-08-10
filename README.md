@@ -11,7 +11,7 @@ implausibles — como pistas para que un analista humano las revise, no
 como veredictos.
 
 <p align="center">
-  <img src="docs/screenshots/map.png" alt="Mapa generado por el CLI: trazas AIS de varios buques con los hallazgos marcados por severidad (hueco de transmision, salto implausible, discrepancia de SOG, encuentro sostenido)" width="800">
+  <img src="docs/screenshots/map.png" alt="Mapa generado por el CLI: trazas AIS de varios buques con los hallazgos marcados por severidad (hueco de transmision, salto implausible, discrepancia de SOG, encuentro sostenido, MMSI estructuralmente invalido)" width="800">
 </p>
 
 *Mapa generado con datos sinteticos de demostracion (ver "Datos de prueba"
@@ -35,7 +35,7 @@ equivalente).
 
 ## Capacidades
 
-Tres detectores independientes y auditables por separado, `src/detectors/`:
+Cuatro detectores independientes y auditables por separado, `src/detectors/`:
 
 - **Huecos de transmision AIS** (`gaps.py`, una sola traza): marca
   intervalos entre informes de posicion consecutivos por encima de lo
@@ -56,6 +56,12 @@ Tres detectores independientes y auditables por separado, `src/detectors/`:
   cualquier zona portuaria/fondeadero real — el patron clasico de un
   transbordo ship-to-ship no declarado. Ver "Zonas portuarias" mas abajo
   para la mascara real que usa.
+- **Inconsistencia de identidad** (`identity.py`, una sola traza + datos
+  estaticos): tres comprobaciones estructurales, sin umbrales que
+  calibrar — el mismo MMSI declara un nombre/indicativo/IMO distinto en
+  momentos diferentes del dataset, un IMO declarado no supera su propio
+  digito de control oficial, o un MMSI transmitiendo como buque no cae en
+  el rango que ITU-R M.585 reserva a estaciones de buque.
 
 Cada hallazgo (`Finding`) lleva su categoria, severidad, posicion, y una
 `description` en español que explica el razonamiento concreto — que
@@ -79,6 +85,7 @@ src/tracks.py                                              │
 src/detectors/gaps.py         (huecos de transmision)      │
 src/detectors/kinematics.py   (saltos implausibles + SOG)  │
 src/detectors/rendezvous.py   (encuentros) ◄────────────────┘
+src/detectors/identity.py     (identidad, usa VesselIdentity[] directamente)
         │
         ▼
 src/pipeline.py   (orquesta ingest -> tracks -> detectores -> Finding[])
@@ -105,6 +112,11 @@ solape temporal descarta la inmensa mayoria de pares antes de comparar
 posicion; optimizarlo mas alla de eso (p.ej. un indice espacial de trazas)
 queda fuera del alcance de esta version — limitacion conocida, documentada
 en el propio modulo.
+
+`identity.py` es el unico detector sin umbrales configurables: sus tres
+comprobaciones son estructurales (una identidad cambia o no, un digito de
+control es valido o no), no hay "cuanto es demasiado" que calibrar, asi
+que no recibe `DetectorConfig`.
 
 ## Uso
 
@@ -133,8 +145,8 @@ hallazgo como un punto coloreado por severidad).
 pytest -v
 ```
 
-50 tests cubriendo los diez modulos del pipeline (geo, ingest, tracks,
-config, zonas, los tres detectores, pipeline, informe, CLI), con fixtures
+62 tests cubriendo los once modulos del pipeline (geo, ingest, tracks,
+config, zonas, los cuatro detectores, pipeline, informe, CLI), con fixtures
 sinteticas versionadas en `tests/fixtures/` que siguen el esquema real de
 columnas de DMA — ninguno depende de descargar nada externo (el extracto
 real de zonas portuarias si esta versionado, ver "Zonas portuarias" mas
@@ -168,9 +180,12 @@ mano siguiendo exactamente el esquema de columnas real de DMA (mismos
 nombres, mismo formato de fecha, mismos valores centinela como
 `Heading = 511` para "no disponible"), con casos deliberados de cada
 detector: un hueco de transmision, un salto de posicion imposible, una
-discrepancia de SOG, y los casos que **no** deberian dispararse (un buque
-fondeado con un hueco largo pero normal, una fila de estacion base que no
-es un buque, una fila sin MMSI valido).
+discrepancia de SOG, un encuentro sostenido en aguas abiertas, un cambio
+de nombre, un IMO con digito de control invalido, un MMSI estructuralmente
+invalido, y los casos que **no** deberian dispararse (un buque fondeado
+con un hueco largo pero normal, una fila de estacion base que no es un
+buque, una fila sin MMSI valido, un encuentro dentro de una zona
+portuaria).
 
 Para un analisis con datos reales: descarga cualquier fichero diario de
 https://web.ais.dk/aisdata/ y pasalo directamente al CLI — el esquema de
@@ -211,8 +226,12 @@ nunca de interdiccion ni de decision automatizada:
   sostenida, fuera de zona portuaria) — no confirma que sea un transbordo,
   no identifica que se transfirio (ni si se transfirio algo), y no analiza
   nada mas alla de la posicion y velocidad ya declaradas por ambos buques.
-- No incluye todavia un detector de inconsistencia de identidad
-  (MMSI/nombre) — ver "Posibles extensiones".
+- El detector de identidad (`identity.py`) señala inconsistencias
+  estructurales (un dato cambio, un digito de control no cuadra) — no
+  intenta determinar la identidad "real" del buque, no consulta ningun
+  registro naval externo (Equasis, IHS Fairplay...) para verificar contra
+  el buque real, y un cambio de nombre detectado puede tener una
+  explicacion completamente legitima (venta, cambio de armador).
 - Los umbrales son heuristicas explicables, no una "verdad" — un hueco de
   transmision tiene explicaciones completamente normales (perdida de
   cobertura VHF en alta mar, congestion de canal) tan a menudo como
@@ -221,9 +240,10 @@ nunca de interdiccion ni de decision automatizada:
 
 ## Posibles extensiones
 
-- **Inconsistencia de identidad**: mismo MMSI con `VesselIdentity`
-  contradictoria a lo largo del tiempo, o MMSI cuyo prefijo MID no encaja
-  con el patron de comportamiento declarado.
+- **Validacion de MID contra el pais de registro**: comprobar que el
+  prefijo MID del MMSI corresponde a un codigo de pais realmente asignado
+  por la ITU (hoy `identity.py` solo valida el rango estructural
+  2-7, no la tabla completa de paises — ver el modulo).
 - **Cobertura de zonas portuarias mas completa**: incluir las relaciones
   multipoligono de OSM descartadas en el extracto actual (ver limitacion
   documentada en `data/zones/README.md`), o ampliar el bounding box mas

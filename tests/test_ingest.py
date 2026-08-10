@@ -45,7 +45,7 @@ def test_parses_vessel_identity_from_static_row(fixtures_dir: Path) -> None:
     identity = next(i for i in identities if i.mmsi == 219000001)
     assert identity.name == "MS TEST STAR"
     assert identity.callsign == "OWTS1"
-    assert identity.imo == 9123456
+    assert identity.imo == 9123453
     assert identity.length == 120.5
 
 

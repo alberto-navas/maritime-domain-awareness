@@ -1,6 +1,6 @@
 Timestamp,Type of mobile,MMSI,Latitude,Longitude,Navigational status,ROT,SOG,COG,Heading,IMO,Callsign,Name,Ship type,Length,Width,Destination
 01/01/2024 08:00:00,Class A,219000001,57.0000,10.0000,Under way using engine,0,9.0,10,10,,,,,,,
-01/01/2024 08:00:30,Class A,219000001,,,Under way using engine,,,,,9123456,OWTS1,MS TEST STAR,Cargo,120.5,20.1,AALBORG
+01/01/2024 08:00:30,Class A,219000001,,,Under way using engine,,,,,9123453,OWTS1,MS TEST STAR,Cargo,120.5,20.1,AALBORG
 01/01/2024 08:01:00,Class A,219000001,57.0025,10.0005,Under way using engine,0,9.1,10,10,,,,,,,
 01/01/2024 08:02:00,Class A,219000001,57.0050,10.0010,Under way using engine,0,9.0,10,10,,,,,,,
 01/01/2024 08:22:00,Class A,219000001,57.0075,10.0015,Under way using engine,0,9.0,10,511,,,,,,,
@@ -26,3 +26,7 @@ Timestamp,Type of mobile,MMSI,Latitude,Longitude,Navigational status,ROT,SOG,COG
 01/01/2024 10:15:00,Class A,219000006,57.2004,11.2004,Under way using engine,0,1.0,0,0,,,,,,,
 01/01/2024 10:20:00,Class A,219000006,57.2004,11.2004,Under way using engine,0,1.0,0,0,,,,,,,
 01/01/2024 10:25:00,Class A,219000006,57.2004,11.2004,Under way using engine,0,1.0,0,0,,,,,,,
+01/01/2024 11:00:00,Class A,219000007,,,Under way using engine,,,,,,,MV ALPHA,,,,
+01/01/2024 11:30:00,Class A,219000007,,,Under way using engine,,,,,,,MV BETA,,,,
+01/01/2024 11:00:00,Class A,219000008,,,Under way using engine,,,,,1234568,,MV GAMMA,,,,
+01/01/2024 11:00:00,Class A,912345678,54.5000,8.5000,Under way using engine,0,5.0,0,0,,,,,,,

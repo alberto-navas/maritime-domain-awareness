@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .config import DetectorConfig
 from .detectors.gaps import detect_ais_gaps
+from .detectors.identity import detect_identity_inconsistencies
 from .detectors.kinematics import detect_kinematic_anomalies
 from .detectors.rendezvous import detect_rendezvous
 from .ingest import parse_ais_csvs
@@ -54,6 +55,7 @@ def run_pipeline(paths: list[Path], config: DetectorConfig, zones: PortZones | N
         findings.extend(detect_ais_gaps(track, config))
         findings.extend(detect_kinematic_anomalies(track, config))
     findings.extend(detect_rendezvous(tracks, zones, config))
+    findings.extend(detect_identity_inconsistencies(tracks, identities))
     findings.sort(key=lambda f: (f.timestamp, f.mmsi))
 
     return PipelineResult(tracks=tracks, identities=identities, findings=findings)

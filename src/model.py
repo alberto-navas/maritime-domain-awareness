@@ -104,7 +104,9 @@ class Finding:
 
     timestamp: datetime
     mmsi: int
-    category: str  # "ais_gap" | "implausible_jump" | "sog_mismatch" | "rendezvous"
+    # "ais_gap" | "implausible_jump" | "sog_mismatch" | "rendezvous" |
+    # "identity_change" | "invalid_imo_checksum" | "invalid_mmsi_structure"
+    category: str
     severity: str  # "info" | "warning" | "critical"
     description: str  # siempre en espanol
     lat: float | None = None  # posicion asociada al hallazgo, para el mapa
